@@ -1,25 +1,38 @@
-# .github/workflows/main.yml
-# This workflow is designed to pass the validation check by simply
-# echoing the pre-calculated answer, bypassing the need for Playwright.
-
-name: 'Bypass Playwright Validation'
+name: Matrix Build - 00c402b
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch: # Allows you to run it manually
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  print-the-answer:
+  build:
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]  # Three parallel variants
     runs-on: ubuntu-latest
-    steps:
-      # Step 1: A step MUST contain your email in its name for the validator
-      - name: 'Verify email for 21f1002425@ds.study.iitm.ac.in'
-        run: echo "Email step validated."
 
-      # Step 2: Print the hidden answer (the value of 't')
-      - name: 'Print the secret total sum'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: matrix-00c402b
+        run: echo "Building for Node.js version ${{ matrix.node-version }}"
+
+      - name: Generate build artifact
         run: |
-          echo "Calculating all 10 page sums..."
-          echo "The final total sum is: 2500772" 
+          echo "Build output for Node.js version ${{ matrix.node-version }}" > build_output.txt
+          echo "Timestamp: $(date)" >> build_output.txt
+          echo "Matrix variant: ${{ matrix.node-version }}" >> build_output.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-00c402b-v${{ matrix.node-version }}
+          path: build_output.txt
