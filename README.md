@@ -3,7 +3,7 @@
 This repository demonstrates a modern CI/CD pipeline using GitHub Actions with matrix build strategy and artifact management.
 
 ## Contact Information
-**Email:** your.email@example.com
+**Email:** 21f1002425@ds.study.iitm.ac.in
 
 ## Overview
 
