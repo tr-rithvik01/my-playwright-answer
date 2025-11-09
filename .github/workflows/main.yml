@@ -17,6 +17,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Create README with email
+        run: |
+          echo "# Matrix Build Workflow" > README.md
+          echo "" >> README.md
+          echo "This repository demonstrates a **GitHub Actions matrix build strategy** with artifact management." >> README.md
+          echo "" >> README.md
+          echo "Each matrix job:" >> README.md
+          echo "- Runs in parallel on different Node.js versions (14, 16, 18)" >> README.md
+          echo "- Generates a unique build artifact" >> README.md
+          echo "- Uploads it using \`actions/upload-artifact@v4\`" >> README.md
+          echo "- Includes a step identifier: \`matrix-00c402b\`" >> README.md
+          echo "" >> README.md
+          echo "**Contact:** rithvik.thachamoochikal@example.com" >> README.md
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
