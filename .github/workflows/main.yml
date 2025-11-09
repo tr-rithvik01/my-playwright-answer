@@ -1,52 +1,115 @@
-name: Matrix Build - 00c402b
+name: Matrix Build with Artifacts
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node-version: [14, 16, 18]  # Three parallel variants
-    runs-on: ubuntu-latest
-
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [18, 20]
+        include:
+          - os: ubuntu-latest
+            os-name: linux
+          - os: macos-latest
+            os-name: macos
+          - os: windows-latest
+            os-name: windows
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Create README with email
+      
+      - name: matrix-00c402b
         run: |
-          echo "# Matrix Build Workflow" > README.md
-          echo "" >> README.md
-          echo "This repository demonstrates a **GitHub Actions matrix build strategy** with artifact management." >> README.md
-          echo "" >> README.md
-          echo "Each matrix job:" >> README.md
-          echo "- Runs in parallel on different Node.js versions (14, 16, 18)" >> README.md
-          echo "- Generates a unique build artifact" >> README.md
-          echo "- Uploads it using \`actions/upload-artifact@v4\`" >> README.md
-          echo "- Includes a step identifier: \`matrix-00c402b\`" >> README.md
-          echo "" >> README.md
-          echo "**Contact:** rithvik.thachamoochikal@example.com" >> README.md
-
-      - name: Set up Node.js
+          echo "Building for Node ${{ matrix.node-version }} on ${{ matrix.os }}"
+          echo "OS Name: ${{ matrix.os-name }}"
+          echo "Matrix configuration successfully identified"
+      
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-
-      - name: matrix-00c402b
-        run: echo "Building for Node.js version ${{ matrix.node-version }}"
-
+      
+      - name: Display environment info
+        run: |
+          node --version
+          npm --version
+          echo "Current directory: $(pwd)"
+      
       - name: Generate build artifact
         run: |
-          echo "Build output for Node.js version ${{ matrix.node-version }}" > build_output.txt
-          echo "Timestamp: $(date)" >> build_output.txt
-          echo "Matrix variant: ${{ matrix.node-version }}" >> build_output.txt
-
-      - name: Upload artifact
+          echo "Build Information" > build-output.txt
+          echo "==================" >> build-output.txt
+          echo "OS: ${{ matrix.os }}" >> build-output.txt
+          echo "OS Name: ${{ matrix.os-name }}" >> build-output.txt
+          echo "Node Version: ${{ matrix.node-version }}" >> build-output.txt
+          echo "Build Date: $(date)" >> build-output.txt
+          echo "Job ID: ${{ github.job }}" >> build-output.txt
+          echo "Run ID: ${{ github.run_id }}" >> build-output.txt
+          echo "==================" >> build-output.txt
+          echo "Build completed successfully!" >> build-output.txt
+        shell: bash
+      
+      - name: Create JSON artifact
+        run: |
+          echo '{"os":"${{ matrix.os }}","os_name":"${{ matrix.os-name }}","node":"${{ matrix.node-version }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","status":"success"}' > build-info.json
+        shell: bash
+      
+      - name: Display artifact contents
+        run: |
+          echo "=== Build Output ==="
+          cat build-output.txt
+          echo ""
+          echo "=== Build Info JSON ==="
+          cat build-info.json
+        shell: bash
+      
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-00c402b-v${{ matrix.node-version }}
-          path: build_output.txt
+          name: build-00c402b-${{ matrix.os-name }}-node${{ matrix.node-version }}
+          path: |
+            build-output.txt
+            build-info.json
+          retention-days: 30
+          if-no-files-found: error
+      
+      - name: Build summary
+        run: |
+          echo "✅ Build completed for ${{ matrix.os-name }} with Node ${{ matrix.node-version }}"
+          echo "📦 Artifact uploaded: build-00c402b-${{ matrix.os-name }}-node${{ matrix.node-version }}"
+
+  summary:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
+      
+      - name: List all artifacts
+        run: |
+          echo "All build artifacts:"
+          ls -R all-artifacts/
+          echo ""
+          echo "Total artifacts: $(ls all-artifacts/ | wc -l)"
+      
+      - name: Create summary report
+        run: |
+          echo "# Matrix Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All matrix builds completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Artifacts Generated" >> $GITHUB_STEP_SUMMARY
+          for dir in all-artifacts/*/; do
+            artifact_name=$(basename "$dir")
+            echo "- 📦 $artifact_name" >> $GITHUB_STEP_SUMMARY
+          done
